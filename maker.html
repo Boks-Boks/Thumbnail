@@ -6,7 +6,7 @@
     <title>YouTube Thumbnail Maker</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
-      @media (max-width: 768px) { /* Adjusts only for mobile screens */
+        @media (max-width: 768px) { /* Adjusts only for mobile screens */
     .controls {
         width: 960px;
         height: 540px;
@@ -26,6 +26,7 @@
             flex-wrap: wrap;
             justify-content: center;
             gap: 10px;
+            
         }
   .editor-container {
     width: 960px;
@@ -132,10 +133,7 @@ document.getElementById("uploadBg").addEventListener("change", function(event) {
         };
         reader.readAsDataURL(file);
     }
-});
-
-
-        document.getElementById("addText").addEventListener("click", function() {
+}); document.getElementById("addText").addEventListener("click", function() {
             const text = document.getElementById("textInput").value;
             if (text.trim()) {
                 const textElement = createDraggableElement("div", text);
@@ -206,103 +204,55 @@ document.getElementById("uploadBg").addEventListener("change", function(event) {
             return element;
         }
 
-        function makeDraggable(element) {
-            let offsetX, offsetY, isDragging = false;
-            element.addEventListener("mousedown", (e) => {
-                isDragging = true;
-                offsetX = e.clientX - element.offsetLeft;
-                offsetY = e.clientY - element.offsetTop;
-                selectedElement = element;
-            });
+       function makeDraggable(element) {
+    let offsetX, offsetY, isDragging = false;
 
-          // Updated functionality with optimizations for speed
+    // Mouse events
+    element.addEventListener("mousedown", (e) => {
+        isDragging = true;
+        offsetX = e.clientX - element.offsetLeft;
+        offsetY = e.clientY - element.offsetTop;
+        selectedElement = element;
+    });
 
-function drawOutline() {
-  const outlineColor = document.getElementById("outlineColor").value;
-  const outlineSize = parseInt(document.getElementById("outlineSize").value);
-  const fileInput = document.getElementById("uploadOutlineImage");
+    document.addEventListener("mousemove", (e) => {
+        if (isDragging) {
+            selectedElement.style.left = `${e.clientX - offsetX}px`;
+            selectedElement.style.top = `${e.clientY - offsetY}px`;
+        }
+    });
 
- if (!uploadedImage) {
-  alert("Please upload an image first.");
-  return;
+    document.addEventListener("mouseup", () => {
+        isDragging = false;
+    });
+
+    // Touch events
+    element.addEventListener("touchstart", (e) => {
+        isDragging = true;
+        offsetX = e.touches[0].clientX - element.offsetLeft;
+        offsetY = e.touches[0].clientY - element.offsetTop;
+        selectedElement = element;
+        e.preventDefault(); // Prevent scrolling while dragging
+    }, { passive: false }); //  Important for preventDefault to work
+
+    document.addEventListener("touchmove", (e) => {
+        if (isDragging) {
+            selectedElement.style.left = `${e.touches[0].clientX - offsetX}px`;
+            selectedElement.style.top = `${e.touches[0].clientY - offsetY}px`;
+            e.preventDefault(); // Prevent scrolling while dragging
+        }
+    }, { passive: false }); //  Important for preventDefault to work
+
+
+    document.addEventListener("touchend", () => {
+        isDragging = false;
+    });
+
+    document.addEventListener("touchcancel", () => {
+        isDragging = false;
+    });
 }
 
-
-  const reader = new FileReader();
-
-  reader.onload = function (e) {
-    const img = new Image();
-    img.src = e.target.result;
-
-    img.onload = () => {
-      const tempCanvas = document.createElement("canvas");
-      const tempCtx = tempCanvas.getContext("2d");
-      tempCanvas.width = img.width + outlineSize * 2;
-      tempCanvas.height = img.height + outlineSize * 2;
-
-      // Draw the image at the center
-      tempCtx.drawImage(img, outlineSize, outlineSize);
-
-      const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
-      const data = imageData.data;
-
-      const outlineCanvas = document.createElement("canvas");
-      const outlineCtx = outlineCanvas.getContext("2d");
-      outlineCanvas.width = tempCanvas.width;
-      outlineCanvas.height = tempCanvas.height;
-
-      const outlineSet = new Set();
-
-      for (let y = 0; y < tempCanvas.height; y++) {
-        for (let x = 0; x < tempCanvas.width; x++) {
-          const index = (y * tempCanvas.width + x) * 4;
-          if (data[index + 3] > 0) {
-            for (let dy = -outlineSize; dy <= outlineSize; dy++) {
-              for (let dx = -outlineSize; dx <= outlineSize; dx++) {
-                if (dx * dx + dy * dy <= outlineSize * outlineSize) {
-                  outlineSet.add(`${x + dx},${y + dy}`);
-                }
-              }
-            }
-          }
-        }
-      }
-
-      outlineCtx.fillStyle = outlineColor;
-      outlineSet.forEach(coord => {
-        const [x, y] = coord.split(",").map(Number);
-        if (x >= 0 && x < outlineCanvas.width && y >= 0 && y < outlineCanvas.height) {
-          outlineCtx.fillRect(x, y, 1, 1);
-        }
-      });
-
-      outlineCtx.drawImage(img, outlineSize, outlineSize);
-
-     const outlinedImage = createDraggableElement("img");
-outlinedImage.src = outlineCanvas.toDataURL();
-outlinedImage.style.width = "100px";
-outlinedImage.style.height = "100px";
-editor.appendChild(outlinedImage);
-
-    };
-  };
-
-  reader.readAsDataURL(fileInput.files[0]);
-}
-
-document.getElementById("generateButton").addEventListener("click", drawOutline);
-          
-            document.addEventListener("mousemove", (e) => {
-                if (isDragging) {
-                    selectedElement.style.left = `${e.clientX - offsetX}px`;
-                    selectedElement.style.top = `${e.clientY - offsetY}px`;
-                }
-            });
-
-            document.addEventListener("mouseup", () => {
-                isDragging = false;
-            });
-        }
 
         function selectElement(element) {
             if (selectedElement) {
@@ -312,23 +262,88 @@ document.getElementById("generateButton").addEventListener("click", drawOutline)
             selectedElement.classList.add("selected");
         }
       
-      let uploadedImage = null; // Store the uploaded image
+   let uploadedImage = null;
+let outlinedImage = null;
 
 document.getElementById("uploadOutlineImage").addEventListener("change", (event) => {
-  const file = event.target.files[0];
-  if (file) {
-    const reader = new FileReader();
-    reader.onload = function (e) {
-      const img = new Image();
-      img.src = e.target.result;
-      img.onload = () => {
-        uploadedImage = img; // Store the image for later use
-      };
-    };
-    reader.readAsDataURL(file);
-  }
+    const file = event.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            uploadedImage = new Image();
+            uploadedImage.onload = () => {
+                // You can now use the 'uploadedImage' in 'drawOutline' function
+                console.log("Image loaded successfully!");
+            };
+            uploadedImage.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
 });
 
+function drawOutline() {
+    const outlineColor = document.getElementById("outlineColor").value;
+    const outlineSize = parseInt(document.getElementById("outlineSize").value);
+
+    if (!uploadedImage) {
+        alert("Please upload an image first.");
+        return;
+    }
+
+    // Create a temporary canvas
+    const tempCanvas = document.createElement("canvas");
+    const tempCtx = tempCanvas.getContext("2d");
+    tempCanvas.width = uploadedImage.width + outlineSize * 2;
+    tempCanvas.height = uploadedImage.height + outlineSize * 2;
+
+    // Draw the image at the center
+    tempCtx.drawImage(uploadedImage, outlineSize, outlineSize);
+
+    // Get image data
+    const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+    const data = imageData.data;
+
+    // Create outline canvas
+    const outlineCanvas = document.createElement("canvas");
+    const outlineCtx = outlineCanvas.getContext("2d");
+    outlineCanvas.width = tempCanvas.width;
+    outlineCanvas.height = tempCanvas.height;
+
+    // Set fill color
+    outlineCtx.fillStyle = outlineColor;
+
+    // Loop through all pixels
+    for (let y = 0; y < tempCanvas.height; y++) {
+        for (let x = 0; x < tempCanvas.width; x++) {
+            const index = (y * tempCanvas.width + x) * 4;
+            if (data[index + 3] > 0) {
+                // Check for adjacent transparent pixels
+                if (data[((y - 1) * tempCanvas.width + x) * 4 + 3] === 0) {
+                    outlineCtx.fillRect(x, y, 1, 1); // Top
+                }
+                if (data[((y + 1) * tempCanvas.width + x) * 4 + 3] === 0) {
+                    outlineCtx.fillRect(x, y, 1, 1); // Bottom
+                }
+                if (data[(y * tempCanvas.width + (x - 1)) * 4 + 3] === 0) {
+                    outlineCtx.fillRect(x, y, 1, 1); // Left
+                }
+                if (data[(y * tempCanvas.width + (x + 1)) * 4 + 3] === 0) {
+                    outlineCtx.fillRect(x, y, 1, 1); // Right
+                }
+            }
+        }
+    }
+
+    // Draw the original image on top of the outline
+    outlineCtx.drawImage(uploadedImage, outlineSize, outlineSize);
+    const outlinedImageElement = createDraggableElement("img");
+    outlinedImageElement.src = outlineCanvas.toDataURL();
+    outlinedImageElement.style.width = "100px";
+    outlinedImageElement.style.height = "100px";
+    editor.appendChild(outlinedImageElement);
+}
+
+document.getElementById("generateButton").addEventListener("click", drawOutline);
     
     // Rotate Selected Element
         document.getElementById("rotateSlider").addEventListener("input", function () {
