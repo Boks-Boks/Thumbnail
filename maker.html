@@ -97,8 +97,7 @@
     </label>
       <label><p>
       Add Outline Border Image:
-      <input type="file" id="uploadOutlineImage" accept="image/*">
-    </label>
+      <input type="file" id="uploadOutlineImage" accept="image/*"></label>
     <label>
       Outline Color:
       <input type="color" id="outlineColor" value="#ffffff">
@@ -204,55 +203,54 @@ document.getElementById("uploadBg").addEventListener("change", function(event) {
             return element;
         }
 
-       function makeDraggable(element) {
-    let offsetX, offsetY, isDragging = false;
+        function makeDraggable(element) {
+            let offsetX, offsetY, isDragging = false;
 
-    // Mouse events
-    element.addEventListener("mousedown", (e) => {
-        isDragging = true;
-        offsetX = e.clientX - element.offsetLeft;
-        offsetY = e.clientY - element.offsetTop;
-        selectedElement = element;
-    });
+            // Mouse events
+            element.addEventListener("mousedown", (e) => {
+                isDragging = true;
+                offsetX = e.clientX - element.offsetLeft;
+                offsetY = e.clientY - element.offsetTop;
+                selectedElement = element;
+            });
 
-    document.addEventListener("mousemove", (e) => {
-        if (isDragging) {
-            selectedElement.style.left = `${e.clientX - offsetX}px`;
-            selectedElement.style.top = `${e.clientY - offsetY}px`;
+            document.addEventListener("mousemove", (e) => {
+                if (isDragging) {
+                    selectedElement.style.left = `${e.clientX - offsetX}px`;
+                    selectedElement.style.top = `${e.clientY - offsetY}px`;
+                }
+            });
+
+            document.addEventListener("mouseup", () => {
+                isDragging = false;
+            });
+
+            // Touch events
+            element.addEventListener("touchstart", (e) => {
+                isDragging = true;
+                offsetX = e.touches[0].clientX - element.offsetLeft;
+                offsetY = e.touches[0].clientY - element.offsetTop;
+                selectedElement = element;
+                e.preventDefault(); // Prevent scrolling while dragging
+            }, { passive: false }); //  Important for preventDefault to work
+
+            document.addEventListener("touchmove", (e) => {
+                if (isDragging) {
+                    selectedElement.style.left = `${e.touches[0].clientX - offsetX}px`;
+                    selectedElement.style.top = `${e.touches[0].clientY - offsetY}px`;
+                    e.preventDefault(); // Prevent scrolling while dragging
+                }
+            }, { passive: false }); //  Important for preventDefault to work
+
+
+            document.addEventListener("touchend", () => {
+                isDragging = false;
+            });
+
+            document.addEventListener("touchcancel", () => {
+                isDragging = false;
+            });
         }
-    });
-
-    document.addEventListener("mouseup", () => {
-        isDragging = false;
-    });
-
-    // Touch events
-    element.addEventListener("touchstart", (e) => {
-        isDragging = true;
-        offsetX = e.touches[0].clientX - element.offsetLeft;
-        offsetY = e.touches[0].clientY - element.offsetTop;
-        selectedElement = element;
-        e.preventDefault(); // Prevent scrolling while dragging
-    }, { passive: false }); //  Important for preventDefault to work
-
-    document.addEventListener("touchmove", (e) => {
-        if (isDragging) {
-            selectedElement.style.left = `${e.touches[0].clientX - offsetX}px`;
-            selectedElement.style.top = `${e.touches[0].clientY - offsetY}px`;
-            e.preventDefault(); // Prevent scrolling while dragging
-        }
-    }, { passive: false }); //  Important for preventDefault to work
-
-
-    document.addEventListener("touchend", () => {
-        isDragging = false;
-    });
-
-    document.addEventListener("touchcancel", () => {
-        isDragging = false;
-    });
-}
-
 
         function selectElement(element) {
             if (selectedElement) {
@@ -262,25 +260,24 @@ document.getElementById("uploadBg").addEventListener("change", function(event) {
             selectedElement.classList.add("selected");
         }
       
-   let uploadedImage = null;
-let outlinedImage = null;
+      let uploadedImage = null; // Store the uploaded image
 
 document.getElementById("uploadOutlineImage").addEventListener("change", (event) => {
-    const file = event.target.files[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = function (e) {
-            uploadedImage = new Image();
-            uploadedImage.onload = () => {
-                // You can now use the 'uploadedImage' in 'drawOutline' function
-                console.log("Image loaded successfully!");
-            };
-            uploadedImage.src = e.target.result;
-        };
-        reader.readAsDataURL(file);
-    }
+  const file = event.target.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      const img = new Image();
+      img.src = e.target.result;
+      img.onload = () => {
+        uploadedImage = img; // Store the image for later use
+      };
+    };
+    reader.readAsDataURL(file);
+  }
 });
 
+    
 function drawOutline() {
     const outlineColor = document.getElementById("outlineColor").value;
     const outlineSize = parseInt(document.getElementById("outlineSize").value);
@@ -419,26 +416,26 @@ document.getElementById("generateButton").addEventListener("click", drawOutline)
         allowTaint: true,
         useCORS: true,
         backgroundColor: null, // Keeps transparency if any
-    }).then(originalCanvas => {
-        // Create a new 1280x720 canvas
-        const finalCanvas = document.createElement("canvas");
-        const ctx = finalCanvas.getContext("2d");
+    }).then(canvas => {
+        canvas.toBlob(function(blob) { // Use toBlob instead of toDataURL
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = "thumbnail.png";
 
-        finalCanvas.width = 1280;
-        finalCanvas.height = 720;
+            // Simulate a click for cross-browser compatibility
+            const clickEvent = new MouseEvent("click", {
+                "view": window,
+                "bubbles": true,
+                "cancelable": false
+            });
+            link.dispatchEvent(clickEvent);
 
-        // Crop and scale content to fit exactly within 1280x720
-        ctx.drawImage(
-            originalCanvas,
-            0, 0, originalCanvas.width, originalCanvas.height, // Source (full original)
-            0, 0, finalCanvas.width, finalCanvas.height // Destination (fit to 1280x720)
-        );
-
-        // Download the properly cropped and scaled image
-        const link = document.createElement("a");
-        link.download = "thumbnail.png";
-        link.href = finalCanvas.toDataURL("image/png");
-        link.click();
+            // Clean up the object URL after the download starts
+            setTimeout(function() {
+                URL.revokeObjectURL(url);
+            }, 100);
+        }, 'image/png');
     });
 });
 
