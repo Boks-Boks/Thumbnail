@@ -5,15 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Combined HTML Documents</title>
     <style>
-         @media (max-width: 768px) {
-
-            /* Adjusts only for mobile screens */
-            .controls {
-                width: 960px;
-                height: 540px;
-            }
-        }
-
+        
         body {
             font-family: Arial, sans-serif;
             margin: 0;
@@ -47,6 +39,16 @@
         /* Desktop Styles (Default) */
 
         /* Mobile Styles (Override) */
+          @media (max-width: 768px) {
+
+            /* Adjusts only for mobile screens */
+            .controls {
+                width: 960px;
+                height: 540px;
+            }
+        }
+
+        
         @media (max-width: 768px) { /* Or your chosen breakpoint */
             .iframe-container {
                 border: 1px solid #ccc; /*Re add border*/
